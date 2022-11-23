@@ -16,7 +16,8 @@ def run(
         poseweights='yolov7-w6-pose.pt',
         source='football1.mp4',
         device='cpu'):
-    
+    #print('here')
+    #test()
     #list to store time
     time_list = []
     #list to store fps
@@ -24,7 +25,7 @@ def run(
     
     #select device
     device = select_device(opt.device)
-    half = device.type != 'cpu'
+    #half = device.type != 'cpu'
     
     # Load model
     model = attempt_load(poseweights, map_location=device)  # load FP32 model
@@ -32,10 +33,16 @@ def run(
 
     #video path
     video_path = source
-
+    #test()
     #pass video to videocapture object
-    cap = cv2.VideoCapture(video_path)
-
+    #input(type(video_path))
+    #cap = cv2.VideoCapture(video_path)
+    if video_path.isnumeric() :
+        cap = cv2.VideoCapture(int(video_path))
+        input(int(video_path))
+    else :
+        cap = cv2.VideoCapture(video_path)
+    
     #check if videocapture not opened
     if (cap.isOpened() == False):
         print('Error while trying to read video. Please check path again')
@@ -44,16 +51,32 @@ def run(
     frame_width = int(cap.get(3))
 
     #get video frame height
-    frame_height = int(cap.get(4))
+    #frame_height = int(cap.get(4))
 
     #code to write a video
-    vid_write_image = letterbox(cap.read()[1], (frame_width), stride=64, auto=True)[0]
+    
+    while True:
+        ret, img = cap.read()
+        if not ret:
+            print("Cannot receive frame")
+
+            #input()
+            continue
+        else:
+            print('a success')
+            img = cv2.resize(img,(520,300))               # 縮小尺寸，加快演算速度
+            #img2 = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)   # 將 BGR 轉換成 RGB
+            break
+    '''
+    vid_write_image = letterbox(img2, (frame_width), stride=64, auto=True)[0]
+    
+    #vid_write_image = letterbox(cap.read()[1], (frame_width), stride=64, auto=True)[0]
     resize_height, resize_width = vid_write_image.shape[:2]
     out_video_name = f"{video_path.split('/')[-1].split('.')[0]}"
     out = cv2.VideoWriter(f"{out_video_name}_keypoint.mp4",
                         cv2.VideoWriter_fourcc(*'mp4v'), 30,
                         (resize_width, resize_height))
-
+    '''
     #count no of frames
     frame_count = 0
     #count total fps
@@ -93,21 +116,35 @@ def run(
                 output, _ = model(image)
 
             #Apply non max suppression
+            
             output = non_max_suppression_kpt(output, 0.25, 0.65, nc=model.yaml['nc'], nkpt=model.yaml['nkpt'], kpt_label=True)
             output = output_to_keypoint(output)
+
             im0 = image[0].permute(1, 2, 0) * 255
             im0 = im0.cpu().numpy().astype(np.uint8)
             
             #reshape image format to (BGR)
             im0 = cv2.cvtColor(im0, cv2.COLOR_RGB2BGR)
+            #cnt = 0
             for idx in range(output.shape[0]):
-                plot_skeleton_kpts(im0, output[idx, 7:].T, 3)
+                tmp1, tmp2 = plot_skeleton_kpts(im0, output[idx, 7:].T, 3) #點在這裡畫
+
+                if tmp1 != 0 and tmp2 !=0:
+                    print(tmp1)
+                '''
                 xmin, ymin = (output[idx, 2]-output[idx, 4]/2), (output[idx, 3]-output[idx, 5]/2)
                 xmax, ymax = (output[idx, 2]+output[idx, 4]/2), (output[idx, 3]+output[idx, 5]/2)
                 
+                            
+                #cv2.imshow('image', im0)
                 #Plotting key points on Image
+                #input()
+                #---------------畫長方型而己2
                 cv2.rectangle(im0,(int(xmin), int(ymin)),(int(xmax), int(ymax)),color=(255, 0, 0),
                     thickness=1,lineType=cv2.LINE_AA)
+                            
+                #cv2.imshow('image_test', im0)
+                #input()
             
             #Calculatio for FPS
             end_time = time.time()
@@ -124,11 +161,11 @@ def run(
             #add FPS on top of video
             cv2.putText(im0, f'FPS: {int(fps)}', (11, 100), 0, 1, [255, 0, 0], thickness=2, lineType=cv2.LINE_AA)
             
-            # cv2.imshow('image', im0)
+            #cv2.imshow('image', im0)
             out.write(im0)
-
-            # if cv2.waitKey(1) & 0xFF == ord('q'):
-            #     break
+            '''
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
         else:
             break
 
@@ -161,9 +198,22 @@ def plot_fps_time_comparision(time_list,fps_list):
 
 #main function
 def main(opt):
+    #test()
     run(**vars(opt))
 
+def test():
+    cap = cv2.VideoCapture(0)
+    while True:
+        ret, img = cap.read()
+        if not ret:
+            print("Cannot receive frame")
+            input()
+            break
+        input(f'success')
 if __name__ == "__main__":
+    #test()
+    
     opt = parse_opt()
     strip_optimizer(opt.device,opt.poseweights)
     main(opt)
+    
