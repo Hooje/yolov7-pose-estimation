@@ -1,0 +1,6 @@
+*.mp4
+*.pyc
+__pycache__
+models
+pse*
+*.pt

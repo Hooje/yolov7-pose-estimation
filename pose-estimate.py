@@ -14,7 +14,7 @@ from utils.general import non_max_suppression_kpt, strip_optimizer
 @torch.no_grad()
 def run(
         poseweights='yolov7-w6-pose.pt',
-        source='football1.mp4',
+        source='0',
         device='cpu'):
     #print('here')
     #test()
@@ -24,7 +24,8 @@ def run(
     fps_list = []
     
     #select device
-    device = select_device(opt.device)
+    #device = select_device(opt.device)
+    device = select_device(device)
     #half = device.type != 'cpu'
     
     # Load model
@@ -39,7 +40,7 @@ def run(
     #cap = cv2.VideoCapture(video_path)
     if video_path.isnumeric() :
         cap = cv2.VideoCapture(int(video_path))
-        input(int(video_path))
+        #input(int(video_path))
     else :
         cap = cv2.VideoCapture(video_path)
     
@@ -65,8 +66,10 @@ def run(
         else:
             print('a success')
             img = cv2.resize(img,(520,300))               # 縮小尺寸，加快演算速度
-            #img2 = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)   # 將 BGR 轉換成 RGB
+            img2 = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)   # 將 BGR 轉換成 RGB
             break
+
+    #--------------------------------
     '''
     vid_write_image = letterbox(img2, (frame_width), stride=64, auto=True)[0]
     
@@ -77,6 +80,7 @@ def run(
                         cv2.VideoWriter_fourcc(*'mp4v'), 30,
                         (resize_width, resize_height))
     '''
+    #--------------------------------
     #count no of frames
     frame_count = 0
     #count total fps
@@ -127,10 +131,14 @@ def run(
             im0 = cv2.cvtColor(im0, cv2.COLOR_RGB2BGR)
             #cnt = 0
             for idx in range(output.shape[0]):
-                tmp1, tmp2 = plot_skeleton_kpts(im0, output[idx, 7:].T, 3) #點在這裡畫
+                tmp1, tmp2, left_or_right = plot_skeleton_kpts(im0, output[idx, 7:].T, 3) #點在這裡畫
 
                 if tmp1 != 0 and tmp2 !=0:
                     print(tmp1)
+                if left_or_right != 'none':
+                    return left_or_right
+
+                #---------------------------------------------------------------------------
                 '''
                 xmin, ymin = (output[idx, 2]-output[idx, 4]/2), (output[idx, 3]-output[idx, 5]/2)
                 xmax, ymax = (output[idx, 2]+output[idx, 4]/2), (output[idx, 3]+output[idx, 5]/2)
@@ -140,6 +148,7 @@ def run(
                 #Plotting key points on Image
                 #input()
                 #---------------畫長方型而己2
+                
                 cv2.rectangle(im0,(int(xmin), int(ymin)),(int(xmax), int(ymax)),color=(255, 0, 0),
                     thickness=1,lineType=cv2.LINE_AA)
                             
@@ -161,11 +170,14 @@ def run(
             #add FPS on top of video
             cv2.putText(im0, f'FPS: {int(fps)}', (11, 100), 0, 1, [255, 0, 0], thickness=2, lineType=cv2.LINE_AA)
             
-            #cv2.imshow('image', im0)
+            cv2.imshow('image', im0)
             out.write(im0)
             '''
+            #-------------------------------------------------------------
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
+
+
         else:
             break
 
@@ -181,8 +193,8 @@ def run(
 def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument('--poseweights', nargs='+', type=str, default='yolov7-w6-pose.pt', help='model path(s)')
-    parser.add_argument('--source', type=str, default='football1.mp4', help='video/0 for webcam')
-    parser.add_argument('--device', type=str, default='cpu', help='cpu/0,1,2,3(gpu)')   #device arugments
+    parser.add_argument('--source', type=str, default='0', help='video/0 for webcam')
+    parser.add_argument('--device', type=str, default='0', help='cpu/0,1,2,3(gpu)')   #device arugments
     opt = parser.parse_args()
     return opt
 
@@ -213,7 +225,8 @@ def test():
 if __name__ == "__main__":
     #test()
     
-    opt = parse_opt()
-    strip_optimizer(opt.device,opt.poseweights)
-    main(opt)
-    
+    #opt = parse_opt()
+    #strip_optimizer(opt.device,opt.poseweights)
+    #main(opt)
+    left_or_right = run()
+    print(left_or_right)

@@ -466,6 +466,8 @@ def plot_skeleton_kpts(im, kpts, steps, orig_shape=None):
     radius = 5
     num_kpts = len(kpts) // steps
 
+    y_list = [999] * 11
+    x_list = [999] * 11
     for kid in range(num_kpts):
         # kid = 7 8 9 10 表示有舉手
         r, g, b = pose_kpt_color[kid]
@@ -475,13 +477,33 @@ def plot_skeleton_kpts(im, kpts, steps, orig_shape=None):
                 conf = kpts[steps * kid + 2]
                 if conf < 0.5:
                     continue
-            cv2.circle(im, (int(x_coord), int(y_coord)), radius, (int(r), int(g), int(b)), -1)
-            #cv2.circle(im, (int(105), int(480)), radius, (int(r), int(g), int(b)), -1)
+            #cv2.circle(im, (int(x_coord), int(y_coord)), radius, (int(r), int(g), int(b)), -1)
+            cv2.circle(im, (int(0), int(0)), radius, (int(r), int(g), int(b)), -1)
             #cv2.putText(im, str(kid)+'_'+str(int(x_coord))+'_'+str(int(y_coord)), (int(x_coord), int(y_coord)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 1, cv2.LINE_AA)
-            if kid == 10 or kid == 9:
-                print('hand and press enter to continue')
-                print(f'its coord is {int(x_coord)}, {int(y_coord)}')
-                return int(x_coord), int(y_coord)
+            cv2.putText(im, str(kid), (int(x_coord), int(y_coord)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 1, cv2.LINE_AA)
+            
+            if kid <= 10 : 
+                y_list[kid] = int(y_coord)
+                x_list[kid] = int(x_coord)
+              
+    if y_list[8] < y_list[6] or y_list[10] < y_list[6] or y_list[10] < y_list[8]:
+        print('raise right hand')
+        if x_list[6] != 999:
+            return x_list[6], y_list[6], 'right'
+        return x_list[5], y_list[5], 'right'
+    if y_list[7] < y_list[5] or y_list[9] < y_list[5] or y_list[9] < y_list[7]:
+        print('raise left hand')
+        if x_list[6] != 999:
+            return x_list[6], y_list[6], 'left'
+        return x_list[5], y_list[5], 'left'
+    
+    '''    
+    if kid == 10 or kid == 9:
+        print('hand and press enter to continue')
+        print(f'its coord is {int(x_coord)}, {int(y_coord)}')
+        return int(x_coord), int(y_coord)
+    '''
+    
 
     for sk_id, sk in enumerate(skeleton):
         r, g, b = pose_limb_color[sk_id]
@@ -497,4 +519,4 @@ def plot_skeleton_kpts(im, kpts, steps, orig_shape=None):
         if pos2[0] % 640 == 0 or pos2[1] % 640 == 0 or pos2[0]<0 or pos2[1]<0:
             continue
         cv2.line(im, pos1, pos2, (int(r), int(g), int(b)), thickness=2)
-    return 0, 0
+    return 0, 0, 'none'
